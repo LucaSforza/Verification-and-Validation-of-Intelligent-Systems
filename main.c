@@ -11,7 +11,7 @@
 char *program_name;
 
 void error_gsl_panic(int code, const char *file, int line) {
-    eprintf("%s:%d: gsl error: %s", program_name, line, gsl_strerror(code));
+    eprintf("%s:%d: gsl error: %s", file, line, gsl_strerror(code));
     exit(EXIT_FAILURE);
 }
 
