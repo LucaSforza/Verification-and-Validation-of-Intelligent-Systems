@@ -6,7 +6,7 @@
                 "${workspaceFolder}/**",
                 "/opt/homebrew/include"
             ],
-            "defines": [],
+            "defines": ["HAVE_INLINE"],
             "compilerPath": "/Library/Developer/CommandLineTools/usr/bin/gcc",
             "cStandard": "c17",
             "cppStandard": "c++17",
