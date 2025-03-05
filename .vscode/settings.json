@@ -1,0 +1,10 @@
+{
+    "files.associations": {
+        "*.java": "java",
+        "stdio.h": "c",
+        "gsl_sf_bessel.h": "c",
+        "gsl_errno.h": "c",
+        "gsl_multimin.h": "c",
+        "gsl_pow_int.h": "c"
+    }
+}
