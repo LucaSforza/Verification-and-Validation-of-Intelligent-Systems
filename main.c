@@ -41,6 +41,7 @@ void fdf(const gsl_vector *x, void *params, double *r, gsl_vector *y) {
 }
 
 int main(int argc, char **args) {
+    (void) argc;
     program_name = *args;
     
     gsl_multimin_fdfminimizer *workspace;

@@ -39,7 +39,8 @@ int main(int argc, char **argv) {
     if(!nob_mkdir_if_not_exists(BUILD_FOLDER)) return EXIT_FAILURE;
     Nob_Cmd cmd = {0};
 
-    nob_cmd_append(&cmd, "gcc", "-I" GSL_INCLUDE_PATH, "-L" GSL_LIB_PATH, "-I", "Utils/");
+    nob_cmd_append(&cmd, "gcc");
+    nob_cmd_append(&cmd,"-Wall", "-Wextra", "-I" GSL_INCLUDE_PATH, "-L" GSL_LIB_PATH, "-I", "Utils/");
     if(debug) {
         nob_cmd_append(&cmd, "-ggdb");
     } else {
