@@ -6,6 +6,8 @@
         "gsl_errno.h": "c",
         "gsl_multimin.h": "c",
         "gsl_pow_int.h": "c",
-        "logging.h": "c"
+        "logging.h": "c",
+        "complex": "c",
+        "format": "c"
     }
 }
