@@ -930,7 +930,7 @@ typedef struct {
     size_t capacity;
 } Nob_Cmds;
 
-bool nob_cmds_run_max_threads_redirect(Nob_Cmd cmds, size_t max_threads, Nob_Cmd_Redirect redirect) {
+bool nob_cmds_run_max_threads_redirect(Nob_Cmds cmds, size_t max_threads, Nob_Cmd_Redirect redirect) {
     bool result = true;
     Nob_Procs procs = {
         .capacity = max_threads,
@@ -940,7 +940,7 @@ bool nob_cmds_run_max_threads_redirect(Nob_Cmd cmds, size_t max_threads, Nob_Cmd
         Nob_Proc proc = nob_cmd_run_async_redirect(*to_run, redirect);
         nob_da_append(&procs, proc);
         if(procs.count >= max_threads) {
-            if(!nob_procs_wait_and_reset(&proc))
+            if(!nob_procs_wait_and_reset(&procs))
                 nob_return_defer(false);
         }
     }
