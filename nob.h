@@ -924,6 +924,37 @@ Nob_Proc nob_cmd_run_async_redirect_and_reset(Nob_Cmd *cmd, Nob_Cmd_Redirect red
     return proc;
 }
 
+typedef struct {
+    Nob_Cmd *items;
+    size_t count;
+    size_t capacity;
+} Nob_Cmds;
+
+bool nob_cmds_run_max_threads_redirect(Nob_Cmd cmds, size_t max_threads, Nob_Cmd_Redirect redirect) {
+    bool result = true;
+    Nob_Procs procs = {
+        .capacity = max_threads,
+    };
+
+    for(Nob_Cmd *to_run = cmds.items; to_run < cmds.items + cmds.count; to_run++) {
+        Nob_Proc proc = nob_cmd_run_async_redirect(*to_run, redirect);
+        nob_da_append(&procs, proc);
+        if(procs.count >= max_threads) {
+            if(!nob_procs_wait_and_reset(&proc))
+                nob_return_defer(false);
+        }
+    }
+    if(procs.count != 0) {
+        if(!nob_procs_wait(procs))
+            nob_return_defer(false);
+    }
+defer:
+    if(procs.items != NULL) { NOB_FREE(procs.items); }
+    return result;
+}
+
+#define nob_cmds_run_max_threads(cmds, n_threads) nob_cmds_run_max_threads_redirect((cmds), (n_threads), {0})
+
 Nob_Fd nob_fd_open_for_read(const char *path)
 {
 #ifndef _WIN32
