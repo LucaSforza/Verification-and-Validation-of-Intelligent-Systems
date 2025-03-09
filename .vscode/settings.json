@@ -8,6 +8,7 @@
         "gsl_pow_int.h": "c",
         "logging.h": "c",
         "complex": "c",
-        "format": "c"
+        "format": "c",
+        "gsl_odeiv2.h": "c"
     }
 }
