@@ -47,7 +47,8 @@ int main(int argc, char **argv) {
         nob_cmd_append(&cmd, "-O3", "-DHAVE_INLINE");
     }
     nob_cmd_append(&cmd, "-o", BUILD_FOLDER "main");
-    nob_cmd_append(&cmd, "-lgsl", "-lgslcblas", "-lm", "main.c");
+    nob_cmd_append(&cmd, "main.c");  // Spostato prima delle librerie
+    nob_cmd_append(&cmd, "-lgsl", "-lgslcblas", "-lm");  // Librerie dopo il file sorgente
 
     if(!nob_cmd_run_sync(cmd)) return EXIT_FAILURE;
 
