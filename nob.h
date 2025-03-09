@@ -158,7 +158,7 @@
       from other languages (for whatever reason).
 
       If only few specific names create conflicts for you, you can just #undef those names after the
-      `#include <nob.h>` since they are macros anyway.
+      `#include <nob.h>` since they are macros anyway.
 */
 
 #ifndef NOB_H_
@@ -364,10 +364,12 @@ typedef struct {
     Nob_Proc *items;
     size_t count;
     size_t capacity;
+    bool failed;
 } Nob_Procs;
 
 bool nob_procs_wait(Nob_Procs procs);
 bool nob_procs_wait_and_reset(Nob_Procs *procs);
+void nob_procs_append_or_wait_and_reset(Nob_Procs *procs, Nob_Proc proc);
 
 // Wait until the process has finished
 bool nob_proc_wait(Nob_Proc proc);
@@ -465,7 +467,7 @@ bool nob_set_current_dir(const char *path);
 #       define NOB_REBUILD_URSELF(binary_path, source_path) "cl.exe", nob_temp_sprintf("/Fe:%s", (binary_path)), source_path
 #    endif
 #  else
-#    define NOB_REBUILD_URSELF(binary_path, source_path) "gcc", "-o", binary_path, source_path
+#    define NOB_REBUILD_URSELF(binary_path, source_path) "cc", "-o", binary_path, source_path
 #  endif
 #endif
 
@@ -924,37 +926,6 @@ Nob_Proc nob_cmd_run_async_redirect_and_reset(Nob_Cmd *cmd, Nob_Cmd_Redirect red
     return proc;
 }
 
-typedef struct {
-    Nob_Cmd *items;
-    size_t count;
-    size_t capacity;
-} Nob_Cmds;
-
-bool nob_cmds_run_max_threads_redirect(Nob_Cmds cmds, size_t max_threads, Nob_Cmd_Redirect redirect) {
-    bool result = true;
-    Nob_Procs procs = {
-        .capacity = max_threads,
-    };
-
-    for(Nob_Cmd *to_run = cmds.items; to_run < cmds.items + cmds.count; to_run++) {
-        Nob_Proc proc = nob_cmd_run_async_redirect(*to_run, redirect);
-        nob_da_append(&procs, proc);
-        if(procs.count >= max_threads) {
-            if(!nob_procs_wait_and_reset(&procs))
-                nob_return_defer(false);
-        }
-    }
-    if(procs.count != 0) {
-        if(!nob_procs_wait(procs))
-            nob_return_defer(false);
-    }
-defer:
-    if(procs.items != NULL) { NOB_FREE(procs.items); }
-    return result;
-}
-
-#define nob_cmds_run_max_threads(cmds, n_threads) nob_cmds_run_max_threads_redirect((cmds), (n_threads), {0})
-
 Nob_Fd nob_fd_open_for_read(const char *path)
 {
 #ifndef _WIN32
@@ -1034,7 +1005,7 @@ void nob_fd_close(Nob_Fd fd)
 
 bool nob_procs_wait(Nob_Procs procs)
 {
-    bool success = true;
+    bool success = !procs.failed;
     for (size_t i = 0; i < procs.count; ++i) {
         success = nob_proc_wait(procs.items[i]) && success;
     }
@@ -1045,7 +1016,18 @@ bool nob_procs_wait_and_reset(Nob_Procs *procs)
 {
     bool success = nob_procs_wait(*procs);
     procs->count = 0;
+    procs->failed = false;
     return success;
+}
+
+void nob_procs_append_or_wait_and_reset(Nob_Procs *procs, Nob_Proc proc)
+{
+    if (procs->count + 1 < procs->capacity) {
+        nob_da_append(procs, proc);
+        return;
+    }
+    procs->failed = !nob_procs_wait(*procs) || procs->failed;
+    procs->count = 0;
 }
 
 bool nob_proc_wait(Nob_Proc proc)
