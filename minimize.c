@@ -6,10 +6,11 @@
 
 #include "utils/logging.h"
 
-#undef ERR_MGS
 
 char *program_name;
 gsl_multimin_fdfminimizer *workspace;
+
+#undef ERR_MGS
 
 void error_gsl_panic(int code, const char *file, int line) {
     eprintf("%s:%d: gsl error: %s", file, line, gsl_strerror(code));

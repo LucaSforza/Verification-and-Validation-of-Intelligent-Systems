@@ -960,7 +960,7 @@ bool nob_cmds_run_redirect(Nob_Cmds *cmds,Nob_Cmd_Recirects *redirects ,size_t n
             redirect = redirects->items[i];
         }
         Nob_Proc proc = nob_cmd_run_async_redirect(cmds->items[i], redirect);
-        if(procs.count >= proc) {
+        if(procs.count >= n_threads) {
             if(!nob_procs_wait_and_reset(&procs)) nob_return_defer(false);
         }
         nob_da_append(&procs, proc);
