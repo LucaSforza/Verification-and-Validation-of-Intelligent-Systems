@@ -29,7 +29,7 @@ bool test_matrix_data(double *data, size_t n, size_t m, double expected) {
 
     double det = gsl_linalg_LU_det(&view.matrix, signum);
     if(fabs(det - expected) > PRECISION) {
-        log_error("Expected det: %lf, actual: %lf",expected, det);
+        eprintf("NOT PASSED: Expected det: %lf, actual: %lf\n",expected, det);
         return false;
     }
 
