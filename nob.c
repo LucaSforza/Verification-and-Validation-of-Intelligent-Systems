@@ -28,7 +28,7 @@ typedef struct {
 char *program_name = NULL;
 bool debug = false;
 Nob_Cmd cmd = {0};
-Target targets[2] = {
+Target targets[] = {
     {
         .src_path = "minimize.c",
         .exe_name = "minimize"
@@ -36,6 +36,10 @@ Target targets[2] = {
     {
         .src_path = "ode.c",
         .exe_name = "ode"
+    },
+    {
+        .src_path = "matrix.c",
+        .exe_name = "matrix"
     }
 };
 
@@ -51,7 +55,7 @@ bool parse_args(int argc, char **argv) {
     return true;
 }
 
-bool append_build_file(Nob_Cmds *cmds, const char *file_path, const char *exe_name) {
+void append_build_file(Nob_Cmds *cmds, const char *file_path, const char *exe_name) {
     nob_cmd_append(&cmd, "gcc");
     nob_cmd_append(&cmd,"-Wall", "-Wextra", "-I" GSL_INCLUDE_PATH, "-L" GSL_LIB_PATH, "-I", "Utils/");
     if(debug) {
@@ -75,17 +79,15 @@ int main(int argc, char **argv) {
 
     if(!nob_mkdir_if_not_exists(BUILD_FOLDER)) return EXIT_FAILURE;
     
-    Nob_Procs procs = {0};
-    nob_da_resize(&procs, THREAD_COUNT);
-    procs.count = 0;
+    Nob_Cmds cmds = {0};
 
     for(int i = 0; i < NOB_ARRAY_LEN(targets); i++) {
-        nob_procs_append_or_wait_and_reset(&procs, build_file(targets[i].src_path, targets[i].exe_name));
+        append_build_file(&cmds, targets[i].src_path, targets[i].exe_name);
     }
 
-    if (!nob_procs_wait(procs)) return EXIT_FAILURE;
+    if(!nob_cmds_run_redirect(&cmds,NULL, 4)) return EXIT_FAILURE;
 
-    nob_cmd_free(cmd);
+    nob_da_free(cmds);
 
     return EXIT_SUCCESS;
 }
