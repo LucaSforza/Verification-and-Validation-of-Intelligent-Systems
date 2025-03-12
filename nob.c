@@ -51,7 +51,7 @@ bool parse_args(int argc, char **argv) {
     return true;
 }
 
-Nob_Proc build_file(const char *file_path, const char *exe_name) {
+bool append_build_file(Nob_Cmds *cmds, const char *file_path, const char *exe_name) {
     nob_cmd_append(&cmd, "gcc");
     nob_cmd_append(&cmd,"-Wall", "-Wextra", "-I" GSL_INCLUDE_PATH, "-L" GSL_LIB_PATH, "-I", "Utils/");
     if(debug) {
@@ -63,7 +63,7 @@ Nob_Proc build_file(const char *file_path, const char *exe_name) {
     nob_cmd_append(&cmd, file_path);  // Spostato prima delle librerie
     nob_cmd_append(&cmd, "-lgsl", "-lgslcblas", "-lm");  // Librerie dopo il file sorgente
 
-    return nob_cmd_run_async_and_reset(&cmd);
+    nob_da_append(cmds, cmd);
 }
 
 int main(int argc, char **argv) {

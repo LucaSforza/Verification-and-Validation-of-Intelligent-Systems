@@ -381,6 +381,12 @@ typedef struct {
     size_t capacity;
 } Nob_Cmd;
 
+typedef struct {
+    Nob_Cmd *items;
+    size_t count;
+    size_t capacity;
+} Nob_Cmds;
+
 // Example:
 // ```c
 // Nob_Fd fdin = nob_fd_open_for_read("input.txt");
@@ -399,6 +405,12 @@ typedef struct {
     Nob_Fd *fdout;
     Nob_Fd *fderr;
 } Nob_Cmd_Redirect;
+
+typedef struct {
+    Nob_Cmd_Redirect *items;
+    size_t count;
+    size_t capacity;
+} Nob_Cmd_Recirects;
 
 // Render a string representation of a command into a string builder. Keep in mind the the
 // string builder is not NULL-terminated by default. Use nob_sb_append_null if you plan to
@@ -436,6 +448,8 @@ bool nob_cmd_run_sync_redirect(Nob_Cmd cmd, Nob_Cmd_Redirect redirect);
 // Run redirected command synchronously and set cmd.count to 0 and close all the opened files
 bool nob_cmd_run_sync_redirect_and_reset(Nob_Cmd *cmd, Nob_Cmd_Redirect redirect);
 
+bool nob_cmds_run_redirect(Nob_Cmds *cmds, Nob_Cmd_Recirects *redirects, size_t n_threads);
+
 #ifndef NOB_TEMP_CAPACITY
 #define NOB_TEMP_CAPACITY (8*1024*1024)
 #endif // NOB_TEMP_CAPACITY
@@ -467,7 +481,7 @@ bool nob_set_current_dir(const char *path);
 #       define NOB_REBUILD_URSELF(binary_path, source_path) "cl.exe", nob_temp_sprintf("/Fe:%s", (binary_path)), source_path
 #    endif
 #  else
-#    define NOB_REBUILD_URSELF(binary_path, source_path) "cc", "-o", binary_path, source_path
+#    define NOB_REBUILD_URSELF(binary_path, source_path) "gcc", "-o", binary_path, source_path
 #  endif
 #endif
 
@@ -924,6 +938,37 @@ Nob_Proc nob_cmd_run_async_redirect_and_reset(Nob_Cmd *cmd, Nob_Cmd_Redirect red
         *redirect.fderr = NOB_INVALID_FD;
     }
     return proc;
+}
+
+bool nob_cmds_run_redirect(Nob_Cmds *cmds,Nob_Cmd_Recirects *redirects ,size_t n_threads) {
+    
+    if(redirects != NULL && redirects->count != cmds->count) {
+        nob_log(NOB_ERROR, "Cmds count and Redirects count is not equal");
+        return false;
+    }
+
+    bool result = true;
+
+    Nob_Procs procs = {
+        .capacity = n_threads,
+    };
+
+    Nob_Cmd_Redirect redirect = {0};
+
+    for(size_t i = 0; i < cmds->count; ++i) {
+        if(redirects != NULL) {
+            redirect = redirects->items[i];
+        }
+        Nob_Proc proc = nob_cmd_run_async_redirect(cmds->items[i], redirect);
+        if(procs.count >= proc) {
+            if(!nob_procs_wait_and_reset(&procs)) nob_return_defer(false);
+        }
+        nob_da_append(&procs, proc);
+    }
+
+defer:
+    if(procs.items != NULL) NOB_FREE(procs.items);
+    return result;
 }
 
 Nob_Fd nob_fd_open_for_read(const char *path)
