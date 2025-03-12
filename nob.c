@@ -18,7 +18,7 @@
 #endif
 
 #define BUILD_FOLDER "build/"
-#define THREAD_COUNT 2
+#define THREAD_COUNT 8
 
 typedef struct {
     const char *src_path;
@@ -28,6 +28,7 @@ typedef struct {
 char *program_name = NULL;
 bool debug = false;
 Nob_Cmd cmd = {0};
+
 Target targets[] = {
     {
         .src_path = "minimize.c",
@@ -55,19 +56,19 @@ bool parse_args(int argc, char **argv) {
     return true;
 }
 
-Nob_Proc build_file(Nob_Cmd *cmd, const char *file_path, const char *exe_name) {
-    nob_cmd_append(cmd, "gcc");
-    nob_cmd_append(cmd,"-Wall", "-Wextra", "-I" GSL_INCLUDE_PATH, "-L" GSL_LIB_PATH, "-I", "Utils/");
+Nob_Proc build_file(const char *file_path, const char *exe_name) {
+    nob_cmd_append(&cmd, "gcc");
+    nob_cmd_append(&cmd,"-Wall", "-Wextra", "-I" GSL_INCLUDE_PATH, "-L" GSL_LIB_PATH, "-I", "Utils/");
     if(debug) {
-        nob_cmd_append(cmd, "-ggdb");
+        nob_cmd_append(&cmd, "-ggdb");
     } else {
-        nob_cmd_append(cmd, "-O3", "-DHAVE_INLINE");
+        nob_cmd_append(&cmd, "-O3", "-DHAVE_INLINE");
     }
-    nob_cmd_append(cmd, "-o", nob_temp_sprintf(BUILD_FOLDER"%s",exe_name));
-    nob_cmd_append(cmd, file_path);  // Spostato prima delle librerie
-    nob_cmd_append(cmd, "-lgsl", "-lgslcblas", "-lm");  // Librerie dopo il file sorgente
+    nob_cmd_append(&cmd, "-o", nob_temp_sprintf(BUILD_FOLDER"%s",exe_name));
+    nob_cmd_append(&cmd, file_path);  // Spostato prima delle librerie
+    nob_cmd_append(&cmd, "-lgsl", "-lgslcblas", "-lm");  // Librerie dopo il file sorgente
 
-    return nob_cmd_run_async_and_reset(cmd);
+    return nob_cmd_run_async_and_reset(&cmd);
 }
 
 int main(int argc, char **argv) {
@@ -79,18 +80,15 @@ int main(int argc, char **argv) {
 
     if(!nob_mkdir_if_not_exists(BUILD_FOLDER)) return EXIT_FAILURE;
     
-    Nob_Cmd cmd = {0};
     Nob_Procs procs = {0};
     nob_da_resize(&procs, THREAD_COUNT);
     procs.count = 0;
 
     for(int i = 0; i < NOB_ARRAY_LEN(targets); i++) {
-        nob_procs_append_or_wait_and_reset(&procs, build_file(&cmd, targets[i].src_path, targets[i].exe_name));
+        nob_procs_append_or_wait_and_reset(&procs, build_file(targets[i].src_path, targets[i].exe_name));
     }
 
     if (!nob_procs_wait(procs)) return EXIT_FAILURE;
-
-    nob_cmd_free(cmd);
 
     return EXIT_SUCCESS;
 }

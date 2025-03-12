@@ -33,7 +33,7 @@ bool test_matrix_data(double *data, size_t n, size_t m, double expected) {
         return false;
     }
 
-    eprintf(" test passed!\n");
+    eprintf("test passed!\n");
 
     return true;
 }
@@ -44,9 +44,33 @@ int main(void) {
          0, 2, 5, 2,
          0, 0, 3, 3,
          1, 0, 0, 4 };
-    
-    if(!test_matrix_data(a_data, N, N, 0.0)) return 1;
+    double b_data[] = // det(a_data) = ?
+        {1, 2, 3, 4,
+         0, 2, 5, 2,
+         0, 0, 3, 3,
+         1, 0, 0, 2 };
+    double c_data[] = // det(a_data) = ?
+         {1, 2, 3, 4,
+          0, 2, 6, 2,
+          0, 0, 3, 3,
+          1, 0, 0, 2 };
+
+    double *datas[] = {
+        a_data, b_data, c_data
+    };
+
+    size_t failed = 0;
+
+    for(size_t i=0; i < ARRAY_LEN(datas); ++i)
+        if(!test_matrix_data(datas[i], N, N, 0.0))
+            failed++;
+
+    if(failed != 0) {
+        log_error("%zu tests failed", failed);
+        return 1;
+    }
 
     log_info("All tests passed");
+
     return 0;
 }
