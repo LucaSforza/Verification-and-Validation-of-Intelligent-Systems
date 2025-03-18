@@ -61,8 +61,10 @@ int main(void) {
 
     size_t failed = 0;
 
+    double expected[] = {0.0, -12.0, -18.0};
+
     for(size_t i=0; i < ARRAY_LEN(datas); ++i)
-        if(!test_matrix_data(datas[i], N, N, 0.0))
+        if(!test_matrix_data(datas[i], N, N, expected[i]))
             failed++;
 
     if(failed != 0) {
