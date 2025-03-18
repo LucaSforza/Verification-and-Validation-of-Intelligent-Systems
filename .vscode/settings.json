@@ -39,6 +39,7 @@
         "stop_token": "c",
         "streambuf": "c",
         "tuple": "c",
-        "control.h": "c"
+        "control.h": "c",
+        "matrix.h": "c"
     }
 }
